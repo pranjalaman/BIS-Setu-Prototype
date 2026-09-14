@@ -38,7 +38,7 @@ def get_chroma_collection():
 def retrieve_relevant_chunks(
     query: str,
     top_k: int = 4,
-    score_threshold: Optional[float] = 1.2
+    score_threshold: Optional[float] = 1.6
 ) -> List[Dict[str, Any]]:
     """
     Retrieves top_k relevant chunks from ChromaDB for the given query.
