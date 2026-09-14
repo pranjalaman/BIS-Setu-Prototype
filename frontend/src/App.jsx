@@ -128,19 +128,11 @@ export default function App() {
         <div className="header-badge">SIH 2026 | PS 26107 | Team ByteKode</div>
         <div className="header-title-row">
           <div className="logo-emblem">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 225 150" width="32" height="32" style={{ borderRadius: '4px', display: 'block' }}>
-              <rect width="225" height="150" fill="#f93"/>
-              <rect width="225" height="50" y="50" fill="#fff"/>
-              <rect width="225" height="50" y="100" fill="#128807"/>
-              <circle cx="112.5" cy="75" r="20" fill="#0008bd"/>
-              <circle cx="112.5" cy="75" r="17.5" fill="#fff"/>
-              <circle cx="112.5" cy="75" r="3.5" fill="#0008bd"/>
-              <g transform="translate(112.5,75)">
-                {Array.from({ length: 24 }).map((_, i) => (
-                  <line key={i} x1="0" y1="0" x2="0" y2="-17.5" stroke="#0008bd" strokeWidth="1" transform={`rotate(${i * 15})`} />
-                ))}
-              </g>
-            </svg>
+            <img 
+              src="/logo.png" 
+              alt="BIS Setu Logo" 
+              style={{ width: '38px', height: '38px', objectFit: 'contain', display: 'block' }} 
+            />
           </div>
           <div>
             <h1>BIS Setu</h1>
