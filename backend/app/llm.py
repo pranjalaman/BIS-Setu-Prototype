@@ -35,9 +35,12 @@ COMMUNICATION & STYLE GUIDELINES:
    - Recognize informal queries or slight variations (e.g. if the user asks "what is ISO 900", connect it to the relevant standard like IS/ISO 9001 from the context).
    - If a specific detail (like an exact fee, fine amount, or specialized technical clause) is not in the context, state simply and politely that this specific detail is not available in the current BIS documents.
 
-3. OUT-OF-SCOPE QUESTIONS:
-   - If the user's question has no relation to the retrieved context or BIS standards, reply politely:
-     "I do not have information on that in the available Bureau of Indian Standards (BIS) documents."
+3. HANDLING UNANSWERABLE OR MISSING INFORMATION:
+   - NEVER give a vague or blunt one-liner like "I do not have information on that."
+   - Explicitly identify and state WHICH information or topic the user is asking about.
+   - Transparently explain that your current system lacks data for this specific topic because your knowledge base currently covers a curated set of official BIS documents (such as ISI Mark, Compulsory Registration Scheme, Hallmarking, Foreign Manufacturers Scheme, Management Systems Certification, and Ecomark), and the specific records or standard for this inquiry have not been ingested into your local database yet.
+   - If the question is completely non-BIS related (e.g. general sports, cooking, coding), politely explain that BIS Setu is exclusively designed for Indian Standards and BIS services.
+   - Always guide the user to check the official BIS portal (bis.gov.in) or ManakOnline (manakonline.in), or suggest searching by Indian Standard (IS) number.
 
 RETRIEVED CONTEXT:
 {context}
@@ -46,6 +49,25 @@ USER QUESTION:
 {question}
 
 HELPFUL LAYMAN ANSWER:"""
+
+
+def build_missing_data_response(query: str) -> str:
+    """
+    Constructs a clear, transparent, and helpful response when information on a specific
+    topic is missing from the indexed BIS dataset, explaining what is missing and why.
+    """
+    cleaned = query.strip().rstrip("?")
+    return (
+        f"I currently do not have enough specific information in my database regarding **\"{cleaned}\"**.\n\n"
+        "My knowledge base is presently equipped with a curated set of official Bureau of Indian Standards (BIS) documents "
+        "(covering schemes such as ISI Mark Certification, Compulsory Registration Scheme (CRS), Hallmarking, Foreign Manufacturers Scheme (FMCS), "
+        "Management Systems Certification (IS/ISO 9001, 14001, 45001), Ecomark, and NITS Training).\n\n"
+        "Because the specific standard, clause, or detailed records for your inquiry have not yet been ingested into my current dataset, "
+        "I am unable to answer this accurately without risking misinformation.\n\n"
+        "**Recommended Next Steps:**\n"
+        "- Search the official Bureau of Indian Standards portal at [www.bis.gov.in](https://www.bis.gov.in) or [manakonline.in](https://www.manakonline.in).\n"
+        "- If you know the relevant Indian Standard number (e.g., IS code) or product category, try asking with that specific standard name."
+    )
 
 
 def format_context_for_prompt(chunks: List[Dict[str, Any]]) -> str:
@@ -95,12 +117,12 @@ def synthesize_offline_grounded_answer(query: str, chunks: List[Dict[str, Any]])
     Extracts strictly matching statements from the retrieved chunks without hallucinating.
     """
     if not chunks:
-        return "I do not have information on that in the available Bureau of Indian Standards (BIS) documents."
+        return build_missing_data_response(query)
 
     top_chunk = chunks[0]
     dist = top_chunk.get("distance")
     if dist is not None and dist > 1.65:
-        return "I do not have information on that in the available Bureau of Indian Standards (BIS) documents."
+        return build_missing_data_response(query)
 
     points = []
     for c in chunks[:3]:
@@ -117,7 +139,7 @@ def synthesize_offline_grounded_answer(query: str, chunks: List[Dict[str, Any]])
 def generate_grounded_answer(query: str, retrieved_chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Core RAG generation function:
-    1. Returns 'no information' if no chunks retrieved or relevance is too low.
+    1. Returns structured missing data response if no chunks retrieved or relevance is too low.
     2. Calls Gemini LLM with strict context prompt if API key is present.
     3. Falls back to deterministic grounded synthesis if offline/no key.
     4. Returns structured answer and verified source list.
@@ -132,7 +154,7 @@ def generate_grounded_answer(query: str, retrieved_chunks: List[Dict[str, Any]])
     # Guardrail: If no chunks retrieved or best distance is very poor
     if not retrieved_chunks:
         return {
-            "answer": "I do not have information on that in the available Bureau of Indian Standards (BIS) documents.",
+            "answer": build_missing_data_response(cleaned_query),
             "sources": []
         }
 
@@ -140,7 +162,7 @@ def generate_grounded_answer(query: str, retrieved_chunks: List[Dict[str, Any]])
     dist = top_chunk.get("distance")
     if dist is not None and dist > 1.65:
         return {
-            "answer": "I do not have information on that in the available Bureau of Indian Standards (BIS) documents.",
+            "answer": build_missing_data_response(cleaned_query),
             "sources": []
         }
 
@@ -167,7 +189,7 @@ def generate_grounded_answer(query: str, retrieved_chunks: List[Dict[str, Any]])
 
             answer_text = response.text.strip() if response and response.text else ""
             if not answer_text:
-                answer_text = "I do not have information on that in the available Bureau of Indian Standards (BIS) documents."
+                answer_text = build_missing_data_response(cleaned_query)
 
             return {
                 "answer": answer_text,
