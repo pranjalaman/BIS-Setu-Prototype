@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 import './App.css'
 
 const SUGGESTIONS = [
@@ -94,40 +95,55 @@ export default function App() {
     sendQuestion(input)
   }
 
-  const formatMessageText = (text) => {
-    // Simple helper to render bold text and bullet points cleanly
-    return text.split('\n').map((line, idx) => {
-      const isBullet = line.trim().startsWith('*') || line.trim().startsWith('•') || line.trim().startsWith('-')
-      const cleanLine = isBullet ? line.replace(/^[\*\•\-]\s*/, '') : line
-
-      // Handle bold **text**
-      const parts = cleanLine.split(/(\*\*.*?\*\*)/g).map((part, pIdx) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={pIdx}>{part.slice(2, -2)}</strong>
-        }
-        return part
-      })
-
-      if (isBullet) {
-        return (
-          <div key={idx} className="bullet-point">
-            <span className="bullet-dot">•</span>
-            <span className="bullet-content">{parts}</span>
-          </div>
-        )
-      }
-      return <div key={idx} className="text-line">{parts}</div>
-    })
-  }
+  const getBisUrl = (sourceFile, docName) => {
+    if (!sourceFile) return "https://www.bis.gov.in/";
+    const fileLower = sourceFile.toLowerCase();
+    if (fileLower.includes("isi_mark") || fileLower.includes("scheme_i")) {
+      return "https://www.bis.gov.in/product-certification/";
+    }
+    if (fileLower.includes("crs") || fileLower.includes("compulsory_registration")) {
+      return "https://www.crsbis.in/BIS/";
+    }
+    if (fileLower.includes("hallmarking")) {
+      return "https://www.bis.gov.in/hallmarking-overview/";
+    }
+    if (fileLower.includes("fmcs") || fileLower.includes("foreign_manufacturers")) {
+      return "https://www.bis.gov.in/index.php/fmcs/";
+    }
+    if (fileLower.includes("management_systems") || fileLower.includes("msc")) {
+      return "https://www.bis.gov.in/management-system-certification/";
+    }
+    if (fileLower.includes("ecomark")) {
+      return "https://www.bis.gov.in/ecomark-scheme/";
+    }
+    if (fileLower.includes("nits") || fileLower.includes("training")) {
+      return "https://www.bis.gov.in/nits/";
+    }
+    return "https://www.bis.gov.in/";
+  };
 
   return (
     <div className="chat-layout">
       <header className="chat-header">
         <div className="header-badge">SIH 2026 | PS 26107 | Team ByteKode</div>
         <div className="header-title-row">
-          <div className="logo-emblem">🇮🇳</div>
+          <div className="logo-emblem">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 225 150" width="32" height="32" style={{ borderRadius: '4px', display: 'block' }}>
+              <rect width="225" height="150" fill="#f93"/>
+              <rect width="225" height="50" y="50" fill="#fff"/>
+              <rect width="225" height="50" y="100" fill="#128807"/>
+              <circle cx="112.5" cy="75" r="20" fill="#0008bd"/>
+              <circle cx="112.5" cy="75" r="17.5" fill="#fff"/>
+              <circle cx="112.5" cy="75" r="3.5" fill="#0008bd"/>
+              <g transform="translate(112.5,75)">
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <line key={i} x1="0" y1="0" x2="0" y2="-17.5" stroke="#0008bd" strokeWidth="1" transform={`rotate(${i * 15})`} />
+                ))}
+              </g>
+            </svg>
+          </div>
           <div>
-            <h1>BIS Setu — AI Assistant</h1>
+            <h1>BIS Setu</h1>
             <p>Direct, Source-Verified Answers from Official Bureau of Indian Standards Documentation</p>
           </div>
         </div>
@@ -137,8 +153,10 @@ export default function App() {
         {messages.map((m) => (
           <div key={m.id} className={`message-row ${m.sender}`}>
             <div className="message-bubble">
-              <div className="sender-tag">{m.sender === 'assistant' ? 'BIS Setu AI' : 'You'}</div>
-              <div className="message-content">{formatMessageText(m.text)}</div>
+              <div className="sender-tag">{m.sender === 'assistant' ? 'BIS Setu' : 'You'}</div>
+              <div className="message-content">
+                <ReactMarkdown>{m.text}</ReactMarkdown>
+              </div>
 
               {m.sources && m.sources.length > 0 && (
                 <div className="sources-container">
@@ -148,7 +166,15 @@ export default function App() {
                   <ul className="sources-list">
                     {m.sources.map((src, i) => (
                       <li key={i} className="source-item">
-                        <span className="source-doc">{src.document_name}</span>
+                        <a 
+                          href={getBisUrl(src.source_file, src.document_name)} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="source-doc"
+                          style={{ textDecoration: 'underline', color: 'inherit' }}
+                        >
+                          {src.document_name}
+                        </a>
                         {src.section && <span className="source-sec"> — {src.section}</span>}
                         {src.clause && <span className="source-clause"> ({src.clause})</span>}
                       </li>
@@ -163,7 +189,7 @@ export default function App() {
         {isLoading && (
           <div className="message-row assistant">
             <div className="message-bubble loading">
-              <div className="sender-tag">BIS Setu AI</div>
+              <div className="sender-tag">BIS Setu</div>
               <div className="loading-state">
                 <div className="spinner"></div>
                 <span>Retrieving relevant BIS standards & generating source-verified response...</span>

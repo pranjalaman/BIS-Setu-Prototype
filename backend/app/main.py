@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -12,6 +13,9 @@ app = FastAPI(
     version=settings.app_version,
     description="BIS Setu - AI Assistant for Indian Standards & BIS Services",
 )
+
+# Serve raw documents for citations
+app.mount("/documents", StaticFiles(directory=settings.raw_documents_directory), name="documents")
 
 # Enable CORS for local React/Vite development
 app.add_middleware(
@@ -64,8 +68,8 @@ def ask_question(request: QuestionRequest):
         )
 
     try:
-        # Retrieve top 5 matching clauses
-        chunks = retrieve_relevant_chunks(question, top_k=5)
+        # Retrieve top 10 matching clauses
+        chunks = retrieve_relevant_chunks(question, top_k=10)
 
         # Generate strictly grounded answer
         result = generate_grounded_answer(question, chunks)
