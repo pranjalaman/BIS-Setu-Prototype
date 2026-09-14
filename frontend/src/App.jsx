@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { Send } from 'lucide-react'
 import './App.css'
 
 const SUGGESTIONS = [
@@ -215,11 +216,12 @@ export default function App() {
             className="query-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about ISI Mark, CRS, Hallmarking HUID, FMCS, or BIS regulations..."
+            placeholder="Ask about ISI Mark, CRS, Hallmarking, ISO 9001..."
             disabled={isLoading}
           />
           <button type="submit" className="send-button" disabled={isLoading || !input.trim()}>
-            Send Question
+            <Send size={16} />
+            <span className="send-btn-text">Send</span>
           </button>
         </form>
       </footer>
