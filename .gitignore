@@ -56,5 +56,5 @@ yarn-error.log*
 # Operating System & IDEs
 .DS_Store
 Thumbs.db
-.vscode/
+.vscode/*
 .idea/

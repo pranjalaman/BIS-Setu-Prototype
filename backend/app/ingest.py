@@ -170,20 +170,9 @@ def chunk_all_documents(directory: Optional[str] = None) -> List[Dict[str, Any]]
 
 def get_embedding_function():
     """
-    Returns embedding function:
-    - If GEMINI_API_KEY is configured, uses Google Gemini embeddings.
-    - Otherwise defaults to Chroma's local ONNX all-MiniLM-L6-v2 embedding function (zero cost/no key).
+    Returns Chroma's default local ONNX all-MiniLM-L6-v2 embedding function.
+    Runs locally with zero external API calls, zero cost, and fast consistent retrieval.
     """
-    api_key = getattr(settings, "gemini_api_key", "").strip()
-    if api_key:
-        try:
-            return embedding_functions.GoogleGenerativeAiEmbeddingFunction(
-                api_key=api_key,
-                model_name=getattr(settings, "embedding_model", "models/embedding-001")
-            )
-        except Exception as e:
-            print(f"Notice: Could not initialize Gemini embedding function ({e}). Using local Chroma embeddings.")
-
     return embedding_functions.DefaultEmbeddingFunction()
 
 

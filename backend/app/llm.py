@@ -7,6 +7,10 @@ LLM Generation Pipeline (Step 5 of PRD)
 from typing import List, Dict, Any, Optional
 import os
 import re
+import warnings
+
+# Suppress deprecation notice in terminal
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 try:
     from app.config import settings
@@ -17,13 +21,13 @@ except ImportError:
 
 STRICT_RAG_PROMPT_TEMPLATE = """You are BIS Setu, an authoritative AI Assistant for Indian Standards & Bureau of Indian Standards (BIS) services.
 
-STRICT INSTRUCTIONS:
+GUIDELINES:
 1. Answer the question using ONLY the provided retrieved context below.
-2. If the answer cannot be determined directly from the context, respond EXACTLY with:
+2. If the answer (or part of it) cannot be determined from the retrieved context, clearly state what information is unavailable in the BIS documents.
+3. If the question is completely outside the scope of the retrieved context, respond with:
    "I do not have information on that in the available Bureau of Indian Standards (BIS) documents."
-3. Do NOT assume, extrapolate, or bring in external knowledge.
-4. Keep the answer plain, clear, and direct.
-5. At the end of your answer, list the exact source citations used.
+4. Never speculate or hallucinate outside the retrieved facts.
+5. Provide a concise, clear, and well-structured answer.
 
 RETRIEVED CONTEXT:
 {context}
@@ -83,25 +87,21 @@ def synthesize_offline_grounded_answer(query: str, chunks: List[Dict[str, Any]])
     if not chunks:
         return "I do not have information on that in the available Bureau of Indian Standards (BIS) documents."
 
-    # Check relevance threshold: if top match distance is too high (weak semantic match), reject
     top_chunk = chunks[0]
     dist = top_chunk.get("distance")
     if dist is not None and dist > 0.95:
         return "I do not have information on that in the available Bureau of Indian Standards (BIS) documents."
 
-    # Extract factual points from the most relevant chunks
     points = []
     for c in chunks[:3]:
         text = c.get("text", "")
-        # Remove context header bracket
         body = re.sub(r"^\[.*?\]\s*", "", text, flags=re.DOTALL).strip()
         lines = [l.strip() for l in body.splitlines() if l.strip() and not l.strip().startswith("#")]
         if lines:
             points.append(f"• **{c.get('section', '')} ({c.get('clause', '')})**:\n  " + " ".join(lines))
 
     header = "Based on official BIS documentation:\n\n"
-    footer = "\n\n*(Note: Add your GEMINI_API_KEY to backend/.env to enable generative natural-language formatting)*"
-    return header + "\n\n".join(points) + footer
+    return header + "\n\n".join(points)
 
 
 def generate_grounded_answer(query: str, retrieved_chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -141,7 +141,7 @@ def generate_grounded_answer(query: str, retrieved_chunks: List[Dict[str, Any]])
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model_name = getattr(settings, "llm_model", "gemini-1.5-flash")
+            model_name = getattr(settings, "llm_model", "gemini-2.5-flash")
             model = genai.GenerativeModel(model_name)
 
             context_str = format_context_for_prompt(retrieved_chunks)
